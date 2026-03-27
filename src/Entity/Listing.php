@@ -4,8 +4,11 @@ namespace App\Entity;
 
 use App\Enum\PropertyType;
 use App\Repository\ListingRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
+#[ORM\HasLifecycleCallbacks] 
 #[ORM\Entity(repositoryClass: ListingRepository::class)]
 class Listing
 {
@@ -36,7 +39,18 @@ class Listing
     private ?string $description = null;
 
     #[ORM\Column]
-    private ?\DateTimeImmutable $createdAt = null;
+    private ?\DateTimeImmutable $createdAt;
+
+    /**
+     * @var Collection<int, AuditReport>
+     */
+    #[ORM\OneToMany(targetEntity: AuditReport::class, mappedBy: 'listing', orphanRemoval: true)]
+    private Collection $auditReports;
+
+    public function __construct()
+    {
+        $this->auditReports = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -127,7 +141,13 @@ class Listing
         return $this;
     }
 
-    public function getCreatedAt(): ?\DateTimeImmutable
+    #[ORM\PrePersist] // 👈 add this method
+    public function setCreatedAtOnPersist(): void
+    {
+        $this->createdAt = new \DateTimeImmutable();
+    }
+
+    public function getCreatedAt(): \DateTimeImmutable
     {
         return $this->createdAt;
     }
@@ -135,6 +155,36 @@ class Listing
     public function setCreatedAt(\DateTimeImmutable $createdAt): static
     {
         $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, AuditReport>
+     */
+    public function getAuditReports(): Collection
+    {
+        return $this->auditReports;
+    }
+
+    public function addAuditReport(AuditReport $auditReport): static
+    {
+        if (!$this->auditReports->contains($auditReport)) {
+            $this->auditReports->add($auditReport);
+            $auditReport->setListing($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAuditReport(AuditReport $auditReport): static
+    {
+        if ($this->auditReports->removeElement($auditReport)) {
+            // set the owning side to null (unless already changed)
+            if ($auditReport->getListing() === $this) {
+                $auditReport->setListing(null);
+            }
+        }
 
         return $this;
     }
