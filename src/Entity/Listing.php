@@ -7,6 +7,7 @@ use App\Repository\ListingRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\HasLifecycleCallbacks] 
 #[ORM\Entity(repositoryClass: ListingRepository::class)]
@@ -16,26 +17,35 @@ class Listing
     #[ORM\GeneratedValue]
     #[ORM\Column]
     private ?int $id = null;
-
+    
+    #[Assert\NotBlank]
+    #[Assert\Length(max: 255)]
     #[ORM\Column(length: 255)]
     private ?string $title = null;
 
+    #[Assert\NotBlank]
     #[ORM\Column(length: 255)]
     private ?string $city = null;
 
+    #[Assert\NotBlank]
     #[ORM\Column]
+    #[Assert\Positive]
     private ?float $surface = null;
 
     #[ORM\Column(enumType: PropertyType::class)]
     private ?PropertyType $type = null;
 
+    #[Assert\NotBlank]
     #[ORM\Column]
+    #[Assert\Positive]
     private ?float $price = null;
 
+    #[Assert\NotBlank]
     #[ORM\Column]
+    #[Assert\PositiveOrZero] 
     private ?int $photosCount = null;
 
-    #[ORM\Column(length: 255, nullable: true)]
+    #[ORM\Column(length: 5000, nullable: true)]
     private ?string $description = null;
 
     #[ORM\Column]
