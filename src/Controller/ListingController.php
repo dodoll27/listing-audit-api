@@ -10,12 +10,15 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Attribute\Route;
 use App\Entity\Listing;
 use App\Enum\PropertyType;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
 
 class ListingController extends AbstractController
 {
     public function __construct(
         private EntityManagerInterface $em,
-        private ListingRepository $repository
+        private ListingRepository $repository,
+        private ValidatorInterface $validator,
+
     ) {}
 
     #[Route('/listings', methods:['POST'])]
@@ -30,6 +33,19 @@ class ListingController extends AbstractController
         $listing->setPrice($data['price']);
         $listing->setPhotosCount($data['photos_count']);
         $listing->setDescription($data['description'] ?? null);
+
+        $errors = $this->validator->validate($listing);
+
+        if (count($errors) > 0 ){
+            $errorMessages = [];
+            foreach($errors as $error){
+                $errorMessages[] = [
+                    'field' => $error->getPropertyPath(),
+                    'message' => $error->getMessage(),
+                ];
+            }
+            return new JsonResponse(['errors' => $errorMessages], 422);
+        }
 
         $this->em->persist($listing);
         $this->em->flush();
